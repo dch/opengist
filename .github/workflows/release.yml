@@ -25,9 +25,36 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/*.tar.gz 
-            build/*.zip 
+            build/*.tar.gz
+            build/*.zip
             build/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  assets-build-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Bundle frontend assets
+        run: make bundle_assets
+
+      - name: Upload Assets Bundle
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/opengist-assets.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
