@@ -24,6 +24,11 @@ build_backend:
 	@echo "Building Opengist binary..."
 	go build -tags fs_embed -ldflags "-X $(VERSION_PKG)=$(GIT_TAG)" -o $(BINARY_NAME) .
 
+bundle_assets: build_frontend
+	@echo "Bundling frontend assets..."
+	@mkdir -p build
+	@tar -czf build/opengist-assets.tar.gz -C public assets .vite
+
 build: build_frontend build_backend
 
 build_crosscompile:
