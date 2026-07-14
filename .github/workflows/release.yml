@@ -3,6 +3,10 @@ name: Release
 on:
   release:
     types: [published]
+  # TEMP: allow testing the webdist tarball step without cutting a release.
+  workflow_dispatch:
+  push:
+    branches: [webdist-tarball]
 
 jobs:
   binaries-build-release:
@@ -12,6 +16,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up Go 1.26
         uses: actions/setup-go@v6
@@ -26,7 +33,18 @@ jobs:
       - name: Cross compile build
         run: make all_crosscompile
 
+      - name: Package frontend assets (webdist)
+        run: make package_webdist
+
+      - name: Upload build artifacts (CI test)
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: build/*.tar.gz
+
       - name: Upload Release Assets
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v3
         with:
           files: |
@@ -37,6 +55,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker-build-release:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
       contents: read
